@@ -8,10 +8,13 @@ TEST_SRC := tests/test_propulsion_server.cpp
 SERVER_BIN := $(BUILD_DIR)/propulsion_server
 TEST_BIN := $(BUILD_DIR)/test_propulsion_server
 
-.PHONY: help build run test clean
+.DEFAULT_GOAL := all
+
+.PHONY: help all build run test clean
 
 help:
 	@printf '%s\n' \
+		'make all      Clean, then build server and test binaries' \
 		'make build    Build the server binary' \
 		'make run      Build and run the server' \
 		'make test     Build and run the tests' \
@@ -26,6 +29,9 @@ $(SERVER_BIN): $(SERVER_SRC) | $(BUILD_STAMP)
 
 $(TEST_BIN): $(TEST_SRC) | $(BUILD_STAMP)
 	$(CXX) $(CXXFLAGS) $< -o $@
+
+all: clean
+	$(MAKE) $(SERVER_BIN) $(TEST_BIN)
 
 build: $(SERVER_BIN)
 

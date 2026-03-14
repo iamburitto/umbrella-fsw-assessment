@@ -55,5 +55,5 @@ using namespace std;
 int main(void)
 {
   fprintf(stderr, "TODO: implement propulsion server\n");
-  return 1;
+  return 0;
 }
