@@ -46,9 +46,7 @@ static void fire_1000ms_thread()
         // get the latest fire command and status
         {
             lock_guard<mutex> lock(g_fire_command_mutex);
-            local_command.seq = g_fire_command.seq;
-            local_command.fire_delay = g_fire_command.fire_delay;
-            local_command.command_pending = g_fire_command.command_pending;
+            local_command = g_fire_command;
         }
 
         // clang-format off
