@@ -84,7 +84,10 @@ static void fire_1000ms_thread()
                 g_fire_command.command_pending = false;
             }
 
-            fprintf(stdout, "firing now! %d\n", fire_tick);
+            fprintf(stdout, "[tick=%d] FIRE target=%d count=%d\n",
+                tick_count,
+                fire_tick,
+                fire_count + 1);
 
             // increment the fire count
             fire_count += 1;
