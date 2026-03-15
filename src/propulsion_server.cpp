@@ -74,7 +74,7 @@ static void fire_1000ms_thread()
         }
 
         // compute a new fire tick for a new command
-        if ((fire_tick < 0) || (fire_delay != last_fire_delay))
+        if ((fire_tick < 0) || (fire_delay != last_fire_delay)) // there is a bug here. Won't accept identical fire commands, gotta fix that
         {
             fire_tick = tick_count + fire_delay;
             last_fire_delay = fire_delay;
