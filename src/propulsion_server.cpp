@@ -29,10 +29,10 @@ struct fire_command_t
     bool command_pending;
 };
 
-static fire_command_t g_fire_command;
+static fire_command_t g_fire_command = {0, 0, false};;
 static mutex g_fire_command_mutex;
 
-static void fire_1000ms_thread()
+static void propulsion_fire_thread()
 {
     int tick_count = 0;
     int fire_count = 0;
@@ -47,15 +47,6 @@ static void fire_1000ms_thread()
             lock_guard<mutex> lock(g_fire_command_mutex);
             local_command = g_fire_command;
         }
-
-        // clang-format off
-        fprintf(stdout, "tick=%3d pending=%d delay=%3d target=%3d fired=%2d\n",
-            tick_count,
-            local_command.command_pending,
-            local_command.fire_delay,
-            fire_tick,
-            fire_count);
-        // clang-format on
 
         // check for no command pending
         if (false == local_command.command_pending)
@@ -73,6 +64,15 @@ static void fire_1000ms_thread()
             fire_tick = tick_count + local_command.fire_delay;
             last_seq = local_command.seq;
         }
+        
+        // clang-format off
+        fprintf(stdout, "tick=%3d pending=%d delay=%3d target=%3d fired=%2d\n",
+            tick_count,
+            local_command.command_pending,
+            local_command.fire_delay,
+            fire_tick,
+            fire_count);
+        // clang-format on
 
         // check if time to fire
         if (tick_count >= fire_tick)
@@ -135,7 +135,7 @@ void read_cmd_thread()
                 g_fire_command.command_pending = false;
             }
             
-            printf("[cmd] cancel\n");
+            fprintf(stdout, "[cmd] cancel\n");
         }
         else if (fire_delay < 0)
         {
@@ -157,7 +157,7 @@ void read_cmd_thread()
 
 int main(void)
 {
-    std::thread fire_thread(fire_1000ms_thread);
+    std::thread fire_thread(propulsion_fire_thread);
     std::thread read_thread(read_cmd_thread);
 
     fire_thread.join();
