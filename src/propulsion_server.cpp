@@ -29,7 +29,7 @@ struct fire_command_t
     int fire_delay;
 };
 
-static fire_command_t g_fire_command = {0, 0, false};;
+static fire_command_t g_fire_command = {0, false, 0};;
 static mutex g_fire_command_mutex;
 
 static void propulsion_fire_thread()
