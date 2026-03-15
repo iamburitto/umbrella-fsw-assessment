@@ -79,7 +79,6 @@ static void fire_1000ms_thread()
 {
     static int tick_count = 0;
     static int fire_count = 0;
-    static int last_fire_delay = 0;
 
     while (1)
     {
