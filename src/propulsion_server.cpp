@@ -24,6 +24,7 @@ using namespace std;  // I hate this but I hate seeing namespace:: everywhere mo
 
 typedef struct
 {
+    int seq;
     int fire_delay;
     bool command_pending;
 } fire_command_t;
@@ -37,6 +38,7 @@ static void fire_1000ms_thread()
     int fire_count = 0;
     int fire_tick = -1;
     int last_fire_delay = -1;
+    int last_seq = 0;
 
     while (true)
     {
@@ -44,6 +46,7 @@ static void fire_1000ms_thread()
         // get the latest fire command and status
         {
             lock_guard<mutex> lock(g_fire_command_mutex);
+            local_command.seq = g_fire_command.seq;
             local_command.fire_delay = g_fire_command.fire_delay;
             local_command.command_pending = g_fire_command.command_pending;
         }
@@ -69,7 +72,7 @@ static void fire_1000ms_thread()
         }
 
         // compute a new fire tick for a new command
-        if ((fire_tick < 0) || (local_command.fire_delay != last_fire_delay)) // there is a bug here. Won't accept identical fire commands, gotta fix that
+        if ((fire_tick < 0) || (local_command.seq != last_seq)) // there is a bug here. Won't accept identical fire commands, gotta fix that
         {
             fire_tick = tick_count + local_command.fire_delay;
             last_fire_delay = local_command.fire_delay;
@@ -92,6 +95,7 @@ static void fire_1000ms_thread()
             // reset fire tick for next command
             fire_tick = -1;
             last_fire_delay = -1;
+            last_seq = local_command.seq;
         }
 
         // increment the clock tick
@@ -115,20 +119,25 @@ void read_cmd_thread()
         int fire_delay = 0;
         char extra = '\0';
 
+        // if we don't get an integer
         if (!(iss >> fire_delay))
         {
             continue;
         }
-
+        
+        // if there's a newline
         if (iss >> extra)
         {
             continue;
         }
-
+        
+        // -1 means cancel the pending fire
         if (fire_delay == -1)
         {
             {
                 lock_guard<mutex> lock(g_fire_command_mutex);
+                g_fire_command.seq += 1;
+                g_fire_command.fire_delay = -1; // not sure if this should be here
                 g_fire_command.command_pending = false;
             }
         }
@@ -136,6 +145,7 @@ void read_cmd_thread()
         {
             {
                 lock_guard<mutex> lock(g_fire_command_mutex);
+                g_fire_command.seq += 1;
                 g_fire_command.fire_delay = fire_delay;
                 g_fire_command.command_pending = true;
             }
