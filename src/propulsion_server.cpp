@@ -114,13 +114,13 @@ void read_cmd_thread()
         int fire_delay = 0;
         char extra = '\0';
 
-        // if we don't get an integer
+        // skip line if it doesn't contain an integer at all
         if (!(iss >> fire_delay))
         {
             continue;
         }
 
-        // if there's a newline
+        // skip lines that have extra non-whitespace characters at the end
         if (iss >> extra)
         {
             continue;
