@@ -132,8 +132,6 @@ void read_cmd_thread()
             {
                 lock_guard<mutex> lock(g_fire_command_mutex);
                 g_fire_command.seq += 1;
-                g_fire_command.fire_delay =
-                    -1;  // not sure if this should be here
                 g_fire_command.command_pending = false;
             }
         }
