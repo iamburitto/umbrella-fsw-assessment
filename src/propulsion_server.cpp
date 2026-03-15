@@ -24,7 +24,7 @@ using namespace std;
 
 struct fire_command_t
 {
-    int seq;
+    int seq; // increments on every new command so the fire thread can detect updates
     int fire_delay;
     bool command_pending;
 };
