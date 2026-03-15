@@ -71,7 +71,7 @@ static void fire_1000ms_thread()
         }
 
         // compute a new fire tick for a new command
-        if ((fire_tick < 0) || (local_command.seq != last_seq))
+        if (local_command.seq != last_seq)
         {
             fire_tick = tick_count + local_command.fire_delay;
             last_seq = local_command.seq;
@@ -134,6 +134,10 @@ void read_cmd_thread()
                 g_fire_command.seq += 1;
                 g_fire_command.command_pending = false;
             }
+        }
+        else if (fire_delay < 0)
+        {
+            continue;
         }
         else
         {
