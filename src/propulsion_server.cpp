@@ -22,12 +22,12 @@
 
 using namespace std;  // I hate this but I hate seeing namespace:: everywhere more
 
-typedef struct
+struct fire_command_t
 {
     int seq;
     int fire_delay;
     bool command_pending;
-} fire_command_t;
+};
 
 static fire_command_t g_fire_command;
 static mutex g_fire_command_mutex;
