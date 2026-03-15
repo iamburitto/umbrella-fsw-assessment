@@ -132,6 +132,8 @@ void read_cmd_thread()
                 g_fire_command.seq += 1;
                 g_fire_command.command_pending = false;
             }
+            
+            printf("[cmd] cancel\n");
         }
         else if (fire_delay < 0)
         {
@@ -145,6 +147,8 @@ void read_cmd_thread()
                 g_fire_command.fire_delay = fire_delay;
                 g_fire_command.command_pending = true;
             }
+            
+            printf("[cmd] fire in %d sec\n", fire_delay);
         }
     }
 }
