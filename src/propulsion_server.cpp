@@ -20,7 +20,8 @@
 #include <mutex>
 #include <thread>
 
-using namespace std;  // I hate this but I hate seeing namespace:: everywhere more
+using namespace std;  // I hate this but I hate seeing namespace:: everywhere
+                      // more
 
 struct fire_command_t
 {
@@ -70,7 +71,7 @@ static void fire_1000ms_thread()
         }
 
         // compute a new fire tick for a new command
-        if ((fire_tick < 0) || (local_command.seq != last_seq)) // there is a bug here. Won't accept identical fire commands, gotta fix that
+        if ((fire_tick < 0) || (local_command.seq != last_seq))
         {
             fire_tick = tick_count + local_command.fire_delay;
             last_seq = local_command.seq;
@@ -101,9 +102,7 @@ static void fire_1000ms_thread()
         // system tick hardware interrupt on a microcontroller)
         this_thread::sleep_for(chrono::seconds(1));
     }
-}  // TODO: There is still a bug here with entering the same command value in a
-   // row - it won't fire twice. For that we'd need a sequence number or
-   // timestamp.
+}
 
 void read_cmd_thread()
 {
@@ -120,20 +119,21 @@ void read_cmd_thread()
         {
             continue;
         }
-        
+
         // if there's a newline
         if (iss >> extra)
         {
             continue;
         }
-        
+
         // -1 means cancel the pending fire
         if (fire_delay == -1)
         {
             {
                 lock_guard<mutex> lock(g_fire_command_mutex);
                 g_fire_command.seq += 1;
-                g_fire_command.fire_delay = -1; // not sure if this should be here
+                g_fire_command.fire_delay =
+                    -1;  // not sure if this should be here
                 g_fire_command.command_pending = false;
             }
         }
