@@ -20,8 +20,7 @@
 #include <mutex>
 #include <thread>
 
-using namespace std;  // I hate this but I hate seeing namespace:: everywhere
-                      // more
+using namespace std;  // I hate this but I hate seeing namespace:: everywhere more
 
 // global shared fire delay + mutex
 static int g_fire_delay = 0;
@@ -40,8 +39,6 @@ static void fire_1000ms_thread()
 
     while (true)
     {
-        printf("tick count: %d\n", tick_count);
-
         // get the latest command pending status
         bool command_pending = false;
         {
@@ -49,23 +46,31 @@ static void fire_1000ms_thread()
             command_pending = g_command_pending;
         }
 
+        // get the latest fire delay command
+        int fire_delay = 0;
+        {
+            lock_guard<mutex> lock(g_fire_delay_mutex);
+            fire_delay = g_fire_delay;
+        }
+
+        // clang-format off
+        printf("[tick=%d] pending=%d delay=%d target=%d fired=%d\n",
+            tick_count,
+            command_pending,
+            fire_delay,
+            fire_tick,
+            fire_count);
+        // clang-format on
+
         // check for no command pending
         if (false == command_pending)
         {
             // reset fire tick state when no command is pending
             fire_tick = -1;
             last_fire_delay = -1;
-
             tick_count += 1;
             this_thread::sleep_for(chrono::seconds(1));
             continue;
-        }
-
-        // get the latest fire delay command
-        int fire_delay = 0;
-        {
-            lock_guard<mutex> lock(g_fire_delay_mutex);
-            fire_delay = g_fire_delay;
         }
 
         // compute a new fire tick for a new command
@@ -101,7 +106,9 @@ static void fire_1000ms_thread()
         // system tick hardware interrupt on a microcontroller)
         this_thread::sleep_for(chrono::seconds(1));
     }
-} // TODO: There is still a bug here with entering the same command value in a row - it won't fire twice. For that we'd need a sequence number or timestamp.
+}  // TODO: There is still a bug here with entering the same command value in a
+   // row - it won't fire twice. For that we'd need a sequence number or
+   // timestamp.
 
 void read_cmd_thread()
 {
