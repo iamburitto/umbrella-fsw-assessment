@@ -150,7 +150,7 @@ void read_cmd_thread()
                 g_fire_command.command_pending = true;
             }
             
-            printf("[cmd] fire in %d sec\n", fire_delay);
+            fprintf(stdout, "[cmd] fire in %d sec\n", fire_delay);
         }
     }
 }
