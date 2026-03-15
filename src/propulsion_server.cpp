@@ -25,8 +25,8 @@ using namespace std;
 struct fire_command_t
 {
     int seq; // increments on every new command so the fire thread can detect updates
-    int fire_delay;
     bool command_pending;
+    int fire_delay;
 };
 
 static fire_command_t g_fire_command = {0, 0, false};;
@@ -58,7 +58,7 @@ static void propulsion_fire_thread()
             continue;
         }
 
-        // compute a new fire tick for a new command
+        // recompute the target tick only when a new command arrives
         if (local_command.seq != last_seq)
         {
             fire_tick = tick_count + local_command.fire_delay;
