@@ -16,7 +16,6 @@
 /* for std::thread */
 #include <cerrno>
 #include <chrono>  // for millisecond sleep
-#include <cstdio>
 #include <mutex>
 #include <thread>
 
