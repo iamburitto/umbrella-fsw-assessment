@@ -145,8 +145,6 @@ void read_cmd_thread()
                 g_fire_command.fire_delay = fire_delay;
                 g_fire_command.command_pending = true;
             }
-
-            printf("%d\n", fire_delay);
         }
     }
 }
