@@ -47,23 +47,24 @@
 // clang-format on
 
 // normal c things
+#include <cstdbool>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdint>
-#include <cstdbool>
 
 // c++ things
 #include <iostream>
 
 /* for std::thread */
-#include <thread>
-#include <mutex>
-#include <chrono> // for millisecond sleep
-#include <cstdio>
 #include <cerrno>
+#include <chrono>  // for millisecond sleep
+#include <cstdio>
+#include <mutex>
+#include <thread>
 
-using namespace std; // I hate this but I hate seeing namespace:: everywhere more
+using namespace std;  // I hate this but I hate seeing namespace:: everywhere
+                      // more
 
 // global shared fire delay + mutex
 static volatile int g_fire_delay = -1;
@@ -79,107 +80,106 @@ static void fire_1000ms_thread()
     static int tick_count = 0;
     static int fire_count = 0;
     static int last_fire_delay = 0;
-    
+
     while (1)
     {
         // get the latest command pending status
-        g_fire_delay_mutex.lock(); 
+        g_fire_delay_mutex.lock();
         static bool command_pending = g_command_pending;
         g_fire_delay_mutex.unlock();
-        
+
         // check for no command pending
-        if (false == command_pending)
-            continue;
-            
+        if (false == command_pending) continue;
+
         // get the latest fire delay command
-        g_fire_delay_mutex.lock(); 
+        g_fire_delay_mutex.lock();
         static int fire_delay = g_fire_delay;
         g_fire_delay_mutex.unlock();
-            
+
         // check for invalid fire delay
         if (-1 == fire_delay)
-            continue; // TODO: maybe set command pending to false here
-        
+            continue;  // TODO: maybe set command pending to false here
+
         // check for no fire commands actually received yet
-        if (fire_count <= 0)
-            continue;
-           
+        if (fire_count <= 0) continue;
+
         // check if time to fire
         int fire_tick = tick_count + fire_delay;
         if (command_pending && tick_count >= fire_tick)
         {
             fprintf(stdout, "firing now!\n");
-            
+
             // clear command pending
-            g_fire_delay_mutex.lock(); 
+            g_fire_delay_mutex.lock();
             g_command_pending = false;
             g_fire_delay_mutex.unlock();
         }
-        
+
         // increment the fire count
         fire_count += 1;
-        
+
         // increment the clock tick
         tick_count += 1;
-        
-        // sleep for a second (there are likely better ways to handle clock - system tick hardware interrupt on a microcontroller)
+
+        // sleep for a second (there are likely better ways to handle clock -
+        // system tick hardware interrupt on a microcontroller)
         this_thread::sleep_for(chrono::milliseconds(1000));
     }
 }
 
 void read_cmd_thread()
 {
-    while(true)
+    while (true)
     {
-       int fire_delay = 0;
-       int rc = scanf("%d", &fire_delay);
-       
-       // got an integer
-       if(rc == 1)
-       {
+        int fire_delay = 0;
+        int rc = scanf("%d", &fire_delay);
+
+        // got an integer
+        if (rc == 1)
+        {
             if (fire_delay == -1)
             {
                 // cancel outstanding fire commands
-                g_command_pending_mutex.lock(); 
+                g_command_pending_mutex.lock();
                 g_command_pending = false;
                 g_fire_delay_mutex.unlock();
             }
             else
             {
                 // set fire delay
-                g_fire_delay_mutex.lock(); 
+                g_fire_delay_mutex.lock();
                 g_fire_delay = fire_delay;
                 g_fire_delay_mutex.unlock();
-            
+
                 // set command pending
-                g_command_pending_mutex.lock(); 
+                g_command_pending_mutex.lock();
                 g_command_pending = true;
                 g_fire_delay_mutex.unlock();
-            
+
                 printf("%d\n", fire_delay);
             }
-       }
-       else if (rc == EOF)
-       {
-            break; // stdin was closed
-       }
-       else
-       {
-            std::scanf("%*s"); // consume the non-integer character and throw it away
-       }
-}
+        }
+        else if (rc == EOF)
+        {
+            break;  // stdin was closed
+        }
+        else
+        {
+            std::scanf(
+                "%*s");  // consume the non-integer character and throw it away
+        }
+    }
 }
 
 int main(void)
 {
-
     std::thread fire_thread(fire_1000ms_thread);
     std::thread read_thread(read_cmd_thread);
 
     fire_thread.join();
     read_thread.join();
-    
+
     fprintf(stderr, "TODO: implement propulsion server\n");
-  
-  return 0;
+
+    return 0;
 }
