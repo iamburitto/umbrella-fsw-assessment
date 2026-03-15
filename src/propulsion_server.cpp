@@ -52,7 +52,7 @@ static void fire_1000ms_thread()
         }
 
         // clang-format off
-        printf("[tick=%d] pending=%d delay=%d target=%d fire_count=%d\n",
+        fprintf(stdout, "[tick=%d] pending=%d delay=%d target=%d fire_count=%d\n",
             tick_count,
             local_command.command_pending,
             local_command.fire_delay,
