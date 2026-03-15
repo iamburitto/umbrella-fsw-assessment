@@ -163,7 +163,5 @@ int main(void)
     fire_thread.join();
     read_thread.join();
 
-    fprintf(stderr, "TODO: implement propulsion server\n");
-
     return 0;
 }
