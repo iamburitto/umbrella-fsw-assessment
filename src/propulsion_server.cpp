@@ -22,13 +22,14 @@
 
 using namespace std;  // I hate this but I hate seeing namespace:: everywhere more
 
-// global shared fire delay + mutex
-static int g_fire_delay = 0;
-static mutex g_fire_delay_mutex;
+typedef struct
+{
+    int fire_delay;
+    bool command_pending;
+} fire_command_t;
 
-// global shared command pending flag
-static bool g_command_pending = false;
-static mutex g_command_pending_mutex;
+static fire_command_t g_fire_command;
+static mutex g_fire_command_mutex;
 
 static void fire_1000ms_thread()
 {
@@ -39,31 +40,25 @@ static void fire_1000ms_thread()
 
     while (true)
     {
-        // get the latest command pending status
-        bool command_pending = false;
+        fire_command_t local_command;
+        // get the latest fire command and status
         {
-            lock_guard<mutex> lock(g_command_pending_mutex);
-            command_pending = g_command_pending;
-        }
-
-        // get the latest fire delay command
-        int fire_delay = 0;
-        {
-            lock_guard<mutex> lock(g_fire_delay_mutex);
-            fire_delay = g_fire_delay;
+            lock_guard<mutex> lock(g_fire_command_mutex);
+            local_command.fire_delay = g_fire_command.fire_delay;
+            local_command.command_pending = g_fire_command.command_pending;
         }
 
         // clang-format off
-        printf("[tick=%d] pending=%d delay=%d target=%d fired=%d\n",
+        printf("[tick=%d] pending=%d delay=%d target=%d fire_count=%d\n",
             tick_count,
-            command_pending,
-            fire_delay,
+            local_command.command_pending,
+            local_command.fire_delay,
             fire_tick,
             fire_count);
         // clang-format on
 
         // check for no command pending
-        if (false == command_pending)
+        if (false == local_command.command_pending)
         {
             // reset fire tick state when no command is pending
             fire_tick = -1;
@@ -74,10 +69,10 @@ static void fire_1000ms_thread()
         }
 
         // compute a new fire tick for a new command
-        if ((fire_tick < 0) || (fire_delay != last_fire_delay)) // there is a bug here. Won't accept identical fire commands, gotta fix that
+        if ((fire_tick < 0) || (local_command.fire_delay != last_fire_delay)) // there is a bug here. Won't accept identical fire commands, gotta fix that
         {
-            fire_tick = tick_count + fire_delay;
-            last_fire_delay = fire_delay;
+            fire_tick = tick_count + local_command.fire_delay;
+            last_fire_delay = local_command.fire_delay;
         }
 
         // check if time to fire
@@ -85,8 +80,8 @@ static void fire_1000ms_thread()
         {
             // clear command pending
             {
-                lock_guard<mutex> lock(g_command_pending_mutex);
-                g_command_pending = false;
+                lock_guard<mutex> lock(g_fire_command_mutex);
+                g_fire_command.command_pending = false;
             }
 
             fprintf(stdout, "firing now! %d\n", fire_tick);
@@ -133,23 +128,19 @@ void read_cmd_thread()
         if (fire_delay == -1)
         {
             {
-                lock_guard<mutex> lock(g_command_pending_mutex);
-                g_command_pending = false;
+                lock_guard<mutex> lock(g_fire_command_mutex);
+                g_fire_command.command_pending = false;
             }
         }
         else
         {
             {
-                lock_guard<mutex> lock(g_fire_delay_mutex);
-                g_fire_delay = fire_delay;
+                lock_guard<mutex> lock(g_fire_command_mutex);
+                g_fire_command.fire_delay = fire_delay;
+                g_fire_command.command_pending = true;
             }
 
-            {
-                lock_guard<mutex> lock(g_command_pending_mutex);
-                g_command_pending = true;
-            }
-
-            // printf("%d\n", fire_delay);
+            printf("%d\n", fire_delay);
         }
     }
 }
