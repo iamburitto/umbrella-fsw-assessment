@@ -37,7 +37,6 @@ static void fire_1000ms_thread()
     int tick_count = 0;
     int fire_count = 0;
     int fire_tick = -1;
-    int last_fire_delay = -1;
     int last_seq = 0;
 
     while (true)
@@ -65,7 +64,6 @@ static void fire_1000ms_thread()
         {
             // reset fire tick state when no command is pending
             fire_tick = -1;
-            last_fire_delay = -1;
             tick_count += 1;
             this_thread::sleep_for(chrono::seconds(1));
             continue;
@@ -75,7 +73,7 @@ static void fire_1000ms_thread()
         if ((fire_tick < 0) || (local_command.seq != last_seq)) // there is a bug here. Won't accept identical fire commands, gotta fix that
         {
             fire_tick = tick_count + local_command.fire_delay;
-            last_fire_delay = local_command.fire_delay;
+            last_seq = local_command.seq;
         }
 
         // check if time to fire
@@ -94,8 +92,6 @@ static void fire_1000ms_thread()
 
             // reset fire tick for next command
             fire_tick = -1;
-            last_fire_delay = -1;
-            last_seq = local_command.seq;
         }
 
         // increment the clock tick
