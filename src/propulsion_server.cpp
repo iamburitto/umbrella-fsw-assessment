@@ -20,8 +20,8 @@
 #include <mutex>
 #include <thread>
 
-using namespace std;  // I hate this but I hate seeing namespace:: everywhere
-                      // more
+// I know this is "bad" for some reason, but I hate namespace:: clutter
+using namespace std;  
 
 struct fire_command_t
 {
