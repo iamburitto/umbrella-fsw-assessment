@@ -39,7 +39,6 @@ static void propulsion_fire_thread()
         fire_command_t local_command;
         unique_lock<mutex> lock(g_fire_command_mutex);
 
-        // wait for pending command
         while (false == g_fire_command.command_pending)
         {
             if (true == g_fire_command.shutdown_requested)
@@ -47,21 +46,28 @@ static void propulsion_fire_thread()
                 return;
             }
 
-            fprintf(stdout, "[fire] waiting for command\n");
+            fprintf(stdout, "[fire] idle\n");
             g_fire_command_cv.wait(lock);
         }
 
-        // snapshot current command
         local_command = g_fire_command;
-        fprintf(stdout, "[fire] armed seq=%d delay=%d sec\n", local_command.seq,
-                local_command.fire_delay);
 
-        // sleep until deadline or woken up early by another command, or for
-        // some other reason (notifier)
+        auto now = chrono::steady_clock::now();
+        auto remaining =
+            chrono::duration_cast<chrono::seconds>(
+                local_command.fire_deadline - now)
+                .count();
+
+        fprintf(stdout,
+                "[fire] seq=%d pending=%d delay=%d remaining=%ld\n",
+                local_command.seq,
+                local_command.command_pending,
+                local_command.fire_delay,
+                remaining);
+
         cv_status wait_status =
             g_fire_command_cv.wait_until(lock, local_command.fire_deadline);
 
-        // if we woke up before the deadline, re-check shared state from the top
         if (wait_status == cv_status::no_timeout)
         {
             if (true == g_fire_command.shutdown_requested)
@@ -69,19 +75,19 @@ static void propulsion_fire_thread()
                 return;
             }
 
-            fprintf(stdout, "[fire] command updated, restarting countdown\n");
+            fprintf(stdout, "[fire] updated before deadline\n");
             continue;
         }
 
-        // if timeout and still same command, fire
         if ((true == g_fire_command.command_pending) &&
             (g_fire_command.seq == local_command.seq))
         {
             g_fire_command.command_pending = false;
             lock.unlock();
 
-            // FIRE
-            fprintf(stdout, "firing now!\n");
+            fprintf(stdout,
+                    "[fire] seq=%d firing now!\n",
+                    local_command.seq);
         }
     }
 }
