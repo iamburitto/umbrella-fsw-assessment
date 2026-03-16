@@ -4,22 +4,34 @@
 - `tests/test_propulsion_server.cpp`: simple C++ unit test skeleton (yes there are frameworks for this, see lengthy note on my unit test philosophy below)
 - `Makefile`: build, run, and test targets
 
+- Also notice `src/propulsion_server_with_timer.cpp` - that's my AI - boosted first crack at using C++ notifiers and fancier mutexes to do a countdown timer sort of thing instead of tick based polling. I think it turned out to be way more confusing and difficult to debug. I try to avoid concurrency when I can and stay deterministic for critical code. But its worth taking a look at - could be combined with the oldie but goodie way of doing things.
+
+It looks like C++ is trying to do whatever Rust does with ownership. Not that I understand that. I don't.
+
 ## How to build it and run it
 
 Tested in ubuntu:
 
 `make run`
 
+If you want the fancy asynchronous version, just replace the `src/propulsion_server.cpp` code and copy-paste `src/propulsion_server_with_timer.cpp` into it.
+
+`make run` will still work.
+
+Sorry, I got a little lazy there.
+
 ## Approach
 
 There is a mutex protected piece of shared memory for a single fire command:
 
+```c
 struct fire_command_t
 {
     int seq; // increments on every new command so the fire thread can detect updates
     bool command_pending;
     int fire_delay;
 };
+```
 
 There are two threads:
 
@@ -33,6 +45,7 @@ Time is hard. Ask me about it some(time) ;D
 ## If I could do it again
 
 I'd write it state-machine style.
+And I'd use regular mutexes with lock/unlock, not the fancy guards.
 
 ## Limitations
 
@@ -64,21 +77,22 @@ In real life:
 
 ## TEST
 
-- The tests here use only the standard library and `assert`.
+- The test functions I defined use only the standard library and `assert`.
     - There's a billion different test frameworks we could use.
-- I didn't do test driven development here. It's not good for prototyping.
+- I didn't actually fill them in.
+- Sometimes I do test driven development. But not for fast prototyping. Read on.
 
 ### Personal philosophy about tests
 
 - Many layers, like an onion. None have to be perfect.
 
-- I don't think unit tests should be used for code coverage. People go overboard with it.
+- I don't think unit tests should be used for code coverage the way most folks (and many standards) do. People go overboard with it.
     - Unit tests are for individual functions, not for everything.
-    - 0% code coverage:
+    - `0%` code coverage:
         - makes code too scary to change (here be dragons)
         - causes learned helplessness (lack of motivation)
         - makes code review hell
-    - 100% code coverage:
+    - `100%` code coverage:
         - makes code too brittle and time consuming to change
         - more time spent debugging test code than making progress
         - test reports and lines of code become more important than good, maintainable, working code
@@ -90,6 +104,8 @@ In real life:
     - make test coverage easy to see and tests easy to write, and folks will choose to do it.
     - The order of "getting it working (first bytes)", code review, and unit testing really matters a lot
         - Ask me how I learned that the hard way. I've got many stories and lessons learned.
+        - I learned the same lessons with test scripts - ask me about that too.
+        - Ask me what I'd choose to do now.
     
 - Software folks need devkits to fiddle with and freedom to learn if they show interest. That's how you get HITLs without anyone asking.
 
@@ -100,3 +116,7 @@ I enjoy understanding things from the bottom up, and don't like taking shortcuts
 If I was going to switch to Rust, I'd ideally like to do initial bringup/firmware development in Rust on a devkit so I'd actually know what was happening. It's only supported on a few specific pieces of hardware right now. There are a few hardware architectures I'd like to get a crack at (whether FPGA, embedded linux, baremetal, FreeRTOS scheduler, or Something Else TM).
 
 I like FPGA and microcontroller work too.
+
+I started out building everything from scratch with devkits (FPGA upwards.)
+
+I majored in computer engineering.
